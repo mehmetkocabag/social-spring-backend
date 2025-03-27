@@ -1,2 +1,2 @@
-sprin boot
+spring boot
 back-end
