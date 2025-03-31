@@ -29,7 +29,7 @@ public class PostService {
         return postRepository.findById(id);
     }
 
-    public void createPost(String userId, String title, String content) {
+    public void createPost(String userId, String title, String content, String fileId) {
         ObjectId userObjectId = new ObjectId(userId);
         User user = userRepository.findById(userObjectId)
                 .orElseThrow(() -> new RuntimeException("User not found/need login"));
@@ -37,6 +37,7 @@ public class PostService {
         Post post = new Post();
         post.setTitle(title);
         post.setContent(content);
+        post.setPicture(fileId);
         post.setAuthorId(userObjectId);
         Post publishedPost = postRepository.save(post);
 

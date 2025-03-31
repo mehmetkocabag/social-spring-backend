@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -16,6 +17,8 @@ public class PostController {
     private PostService postService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private ImageService imageService;
 
     @GetMapping("/feed")
     public ResponseEntity<?> getAllPosts() {
@@ -113,13 +116,17 @@ public class PostController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createPost(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> createPost(@RequestParam(value = "file", required = false) MultipartFile file, @RequestParam Map<String, String> request) {
         String userId = request.get("userId");
         String title = request.get("title");
         String content = request.get("content");
 
         try {
-            postService.createPost(userId, title, content);
+            String fileId = null;
+            if (file != null && !file.isEmpty()) {
+                fileId = imageService.storeImage(file);
+            }
+            postService.createPost(userId, title, content, fileId);
             return ResponseEntity.ok(Map.of("message", "Post created successfully"));
 
         } catch (Exception e) {
