@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @Service
 public class PostService {
@@ -128,4 +131,29 @@ public class PostService {
 //        postRepository.deleteById(id);
 //    }
 
+    public List<Post> getPostsCursor(String cursor, int size) {
+        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "_id"));
+
+        if (cursor == null || cursor.isEmpty()) {
+            return postRepository.findAll(pageable).getContent();
+        } else {
+            ObjectId cursorId = new ObjectId(cursor);
+            return postRepository.findPostsBeforeCursor(cursorId, pageable);
+        }
+    }
+//    implement later
+//    public List<Post> searchPostsCursor(String query, String cursor, int size) {
+//        if (query == null || query.trim().isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//
+//        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "_id"));
+//
+//        if (cursor == null || cursor.isEmpty()) {
+//            return postRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(query, query);
+//        } else {
+//            ObjectId cursorId = new ObjectId(cursor);
+//            return postRepository.findSearchResultsBeforeCursor(query, query, cursorId, pageable);
+//        }
+//    }
 }

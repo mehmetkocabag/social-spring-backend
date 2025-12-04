@@ -21,10 +21,13 @@ public class PostController {
     private ImageService imageService;
 
     @GetMapping("/feed")
-    public ResponseEntity<?> getAllPosts() {
+    public ResponseEntity<?> getAllPosts(
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size) {
         try {
-            List<Post> posts = postService.getAllPosts();
+            List<Post> posts = postService.getPostsCursor(cursor, size);
             List<Map<String, Object>> postsInfo = new ArrayList<>();
+
             for (Post post : posts) {
                 Date creationDate = post.getPostId().getDate();
                 SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
@@ -35,7 +38,7 @@ public class PostController {
                         "id", post.getPostId().toString(),
                         "title", post.getTitle(),
                         "content", post.getContent(),
-                        "picture", post.getPicture() == null ?  "":post.getPicture(),
+                        "picture", post.getPicture() == null ? "" : post.getPicture(),
                         "likesCount", post.getLikesCount(),
                         "dislikesCount", post.getDislikesCount(),
                         "commentsCount", post.getCommentsCount(),
@@ -48,7 +51,17 @@ public class PostController {
                 );
                 postsInfo.add(postInfo);
             }
-            return new ResponseEntity<>(postsInfo, HttpStatus.OK);
+
+            String nextCursor = posts.isEmpty() ? null : posts.get(posts.size() - 1).getPostId().toString();
+            boolean hasMore = posts.size() == size; // If we got full page, there might be more
+
+            Map<String, Object> response = Map.of(
+                    "posts", postsInfo,
+                    "nextCursor", nextCursor != null ? nextCursor : "",
+                    "hasMore", hasMore
+            );
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
