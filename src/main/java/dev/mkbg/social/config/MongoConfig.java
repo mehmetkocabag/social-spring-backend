@@ -1,4 +1,4 @@
-package dev.mkbg.social;
+package dev.mkbg.social.config;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;

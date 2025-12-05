@@ -99,33 +99,51 @@ public class PostController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> searchPosts(@RequestParam String query) {
-        List<Post> results = postService.searchPosts(query);
-        List<Map<String, Object>> postsInfo = new ArrayList<>();
-        for (Post post : results) {
-            Date creationDate = post.getPostId().getDate();
-            SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
-            String formattedCreationDate = dateFormat.format(creationDate);
-            User author = postService.getPostAuthor(post);
+    public ResponseEntity<?> searchPosts(
+            @RequestParam String query,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            List<Post> results = postService.searchPostsCursor(query, cursor, size);
+            List<Map<String, Object>> postsInfo = new ArrayList<>();
 
-            Map<String, Object> postInfo = Map.of(
-                    "id", post.getPostId().toString(),
-                    "title", post.getTitle(),
-                    "content", post.getContent(),
-                    "picture", post.getPicture() == null ?  "":post.getPicture(),
-                    "likesCount", post.getLikesCount(),
-                    "dislikesCount", post.getDislikesCount(),
-                    "commentsCount", post.getCommentsCount(),
-                    "creationDate", formattedCreationDate,
-                    "timeStamp", post.getPostId().getTimestamp(),
-                    "author", Map.of(
-                            "id", author.getUserId().toString(),
-                            "username", author.getUsername()
-                    )
+            for (Post post : results) {
+                Date creationDate = post.getPostId().getDate();
+                SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy");
+                String formattedCreationDate = dateFormat.format(creationDate);
+                User author = postService.getPostAuthor(post);
+
+                Map<String, Object> postInfo = Map.of(
+                        "id", post.getPostId().toString(),
+                        "title", post.getTitle(),
+                        "content", post.getContent(),
+                        "picture", post.getPicture() == null ? "" : post.getPicture(),
+                        "likesCount", post.getLikesCount(),
+                        "dislikesCount", post.getDislikesCount(),
+                        "commentsCount", post.getCommentsCount(),
+                        "creationDate", formattedCreationDate,
+                        "timeStamp", post.getPostId().getTimestamp(),
+                        "author", Map.of(
+                                "id", author.getUserId().toString(),
+                                "username", author.getUsername()
+                        )
+                );
+                postsInfo.add(postInfo);
+            }
+
+            String nextCursor = results.isEmpty() ? "" : results.get(results.size() - 1).getPostId().toString();
+            boolean hasMore = results.size() == size;
+
+            Map<String, Object> response = Map.of(
+                    "posts", postsInfo,
+                    "nextCursor", nextCursor,
+                    "hasMore", hasMore
             );
-            postsInfo.add(postInfo);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(postsInfo, HttpStatus.OK);
     }
 
     @PostMapping("/create")

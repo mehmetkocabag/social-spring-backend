@@ -47,13 +47,28 @@ public class PostService {
         user.addPublishedPost(publishedPost);
         userRepository.save(user);
     }
+//    Deprecated in favor of cursor pagination
+//    public List<Post> searchPosts(String query) {
+//        if (query == null || query.trim().isEmpty()) {
+//            return Collections.emptyList();
+//        }
+//        return postRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(
+//                query, query);
+//    }
 
-    public List<Post> searchPosts(String query) {
+    public List<Post> searchPostsCursor(String query, String cursor, int size) {
         if (query == null || query.trim().isEmpty()) {
             return Collections.emptyList();
         }
-        return postRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(
-                query, query);
+
+        Pageable pageable = PageRequest.of(0, size, Sort.by(Sort.Direction.DESC, "_id"));
+
+        if (cursor == null || cursor.isEmpty()) {
+            return postRepository.findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(query, query, pageable);
+        } else {
+            ObjectId cursorId = new ObjectId(cursor);
+            return postRepository.findSearchResultsBeforeCursor(query, query, cursorId, pageable);
+        }
     }
 
     public Post likePost(String postId, String userId) {

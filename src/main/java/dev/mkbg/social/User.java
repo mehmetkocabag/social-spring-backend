@@ -8,7 +8,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Document(collection = "users")
 @Data
@@ -22,6 +24,7 @@ public class User {
     private String password;
     private String email;
     private String profilePicture;
+    private Set<String> roles = new HashSet<>();
 
     private List<ObjectId> publishedPostIds = new ArrayList<>();
     private List<ObjectId> likedPostIds = new ArrayList<>();
@@ -78,6 +81,13 @@ public class User {
     }
     public String getPublishedCommentsCount() {
         return String.valueOf(publishedCommentIds.size());
+    }
+
+    public void addRole(String role) {
+        if (this.roles == null) {
+            this.roles = new HashSet<>();
+        }
+        this.roles.add(role);
     }
 
 //    void removePublishedPost() {}
